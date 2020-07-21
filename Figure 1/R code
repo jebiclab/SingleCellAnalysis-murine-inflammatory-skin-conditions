@@ -23,17 +23,27 @@
 
 ##########################################   Figure 1C   ########################################
 
+Idents(Immune) <- Immune@meta.data$seurat_clusters
+Idents(Immune)
+Immune<- RenameIdents(Immune, `0` = "Mac", `1` = "DETC", `2` = "M/MdM", `3` = "dγδT", `4` = "cDC2", `5` = "ILC2", `6` = "Thet", `9` = "M/B", 
+                      `10` = "Neu", `14` = "cDC1", `15` = "LC", `16` = "mDC", `17` = "NK")
+
+DimPlot(Immune, reduction = "tsne", label = T, label.size = 5)+NoLegend()+
+  
+levels(Immune) <- c("Mac", "M/MdM", "cDC1", "cDC2", "mDC", "LC", "DETC", "dγδT", "Thet", "ILC2","NK", "M/B", "Neu")
 
 
+markers.to.plot <- c("Adgre1", "Itgam", "Cd68", "Lyz2", "Ms4a7", "C1qc", "Plac8", "Ly6c2", "Clec9a", "Xcr1", "Mgl2", "Cd209d",
+                     "H2-Ab1", "Sirpa", "Fscn1", "Cacnb3","Apol7c", "Flt3", "Ccr7", "Cd207", "Epcam", "Ly75", "Itgax", "Itgae", 
+                     "Cd3g", "Cd3e", "Thy1", "Trbc1", "Trdc", "Tcrg-C1", "Cd163l1", "X5830411N06Rik","Icos", "Trac", "Cd4", "Cd8a", "Il2ra", "Foxp3", "Gata3", "Rora", 
+                     "Gzma", "Gzmb", "Klra7", "Klra8", "Ncr1", "Gata2", "Ms4a2", "Cpa3",	"Mcpt4", "Mcpt8",
+                     "Cd14", "Csf3r", "S100a9", "S100a8", "Sell")
 
-
-
-
-
-
-
-
+DotPlot(Immune, features = rev(markers.to.plot), cols=c("navajowhite1", "steelblue3"), scale.by = "radius", dot.scale=8)+
+  theme(axis.text.x = element_text(size = 10, angle = 90))
 
 
 
 ##########################################   Figure 1D   ########################################
+VlnPlot(Immune, features = "Ccr6", assay="RNA", slot = "data")+
+  theme(axis.text.x = element_text(size = 10, angle = 0))+NoLegend()
