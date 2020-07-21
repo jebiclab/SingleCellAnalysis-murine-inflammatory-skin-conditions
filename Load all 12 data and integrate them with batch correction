@@ -1,1 +1,180 @@
+#######################load all the packages
+library(seurat)
+library(cowplot)
+library(gplots)
+library(dplyr)
 
+
+##############standard workflow
+
+# LOADING DATA
+##### Load data as sparce matrix for use with Seurat
+OXA1.data <-Read10X_h5("G:/Cellranger-Outs-Yale/outs-OXA1/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
+OXA2.data <-Read10X_h5("G:/Cellranger-Outs-Yale/outs-OXA2/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
+OXA3.data <-Read10X_h5("G:/Cellranger-Outs-Yale/outs-OXA3/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
+
+EtOH1.data <-Read10X_h5("G:/Cellranger-Outs-Yale/outs-EtOH1/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
+EtOH2.data <-Read10X_h5("G:/Cellranger-Outs-Yale/outs-EtOH2/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
+EtOH3.data <-Read10X_h5("G:/Cellranger-Outs-Yale/outs-EtOH3/filtered_feature_bc_matrix.h5", use.names = TRUE, unique.features = TRUE)
+
+VEH2_data <- Read10X(data.dir = "G:/Cellranger-Outs-Yale/IMQ-CR3.1.0/m_VEH_7d_2_VEH2_mex")
+VEH3_data <- Read10X(data.dir = "G:/Cellranger-Outs-Yale/IMQ-CR3.1.0/m_VEH_7d_3_VEH3_mex")
+VEH4_data <- Read10X(data.dir = "G:/Cellranger-Outs-Yale/IMQ-CR3.1.0/m_VEH_7d_4_VEH4_mex")
+
+IMQ1_data <- Read10X(data.dir = "G:/Cellranger-Outs-Yale/IMQ-CR3.1.0/m_IMQ_7d_1_IMQ1_mex")
+IMQ3_data <- Read10X(data.dir = "G:/Cellranger-Outs-Yale/IMQ-CR3.1.0/m_IMQ_7d_3_IMQ3_mex")
+IMQ6_data <- Read10X(data.dir = "G:/Cellranger-Outs-Yale/IMQ-CR3.1.0/m_IMQ_7d_6_IMQ6_mex")
+
+#####discard all expressed human genes####
+OXA1.data$"Gene Expression" <- CollapseSpeciesExpressionMatrix(OXA1.data[["Gene Expression"]], prefix = "mm10_", controls = "GRCh38_", ncontrols = 0)
+OXA2.data$"Gene Expression" <- CollapseSpeciesExpressionMatrix(OXA2.data[["Gene Expression"]], prefix = "mm10_", controls = "GRCh38_", ncontrols = 0)
+OXA3.data$"Gene Expression" <- CollapseSpeciesExpressionMatrix(OXA3.data[["Gene Expression"]], prefix = "mm10_", controls = "GRCh38_", ncontrols = 0)
+EtOH1.data$"Gene Expression" <- CollapseSpeciesExpressionMatrix(EtOH1.data[["Gene Expression"]], prefix = "mm10_",controls = "GRCh38_", ncontrols = 0)
+EtOH2.data$"Gene Expression" <- CollapseSpeciesExpressionMatrix(EtOH2.data[["Gene Expression"]], prefix = "mm10_",controls = "GRCh38_", ncontrols = 0)
+EtOH3.data$"Gene Expression" <- CollapseSpeciesExpressionMatrix(EtOH3.data[["Gene Expression"]], prefix = "mm10_",controls = "GRCh38_", ncontrols = 0)
+
+####### Function to "trim"_TotalSeqA from feature names #######
+
+trim.feature.names <- function(inmat){
+  newnames <- sapply(strsplit(rownames(inmat), "-"),
+                     function(x) {
+                       if(length(x)==1) return(x)
+                       else return(paste(x[-length(x)], collapse="-"))
+                     })
+  rownames(inmat) <- newnames
+  return(inmat)
+}
+
+
+#######################################################
+##### Trim Ab names
+OXA1.data$"Antibody Capture" <- trim.feature.names(OXA1.data$"Antibody Capture")
+OXA2.data$"Antibody Capture" <- trim.feature.names(OXA2.data$"Antibody Capture")
+OXA3.data$"Antibody Capture" <- trim.feature.names(OXA3.data$"Antibody Capture")
+EtOH1.data$"Antibody Capture" <- trim.feature.names(EtOH1.data$"Antibody Capture")
+EtOH2.data$"Antibody Capture" <- trim.feature.names(EtOH2.data$"Antibody Capture")
+EtOH3.data$"Antibody Capture" <- trim.feature.names(EtOH3.data$"Antibody Capture")
+
+##### Trim gene names
+rownames(OXA1.data$"Gene Expression") <- gsub(pattern = "_", replacement = "",
+                                              x = rownames(OXA1.data$"Gene Expression"))
+rownames(OXA2.data$"Gene Expression") <- gsub(pattern = "_", replacement = "",
+                                              x = rownames(OXA2.data$"Gene Expression"))
+rownames(OXA3.data$"Gene Expression") <- gsub(pattern = "_", replacement = "",
+                                              x = rownames(OXA3.data$"Gene Expression"))
+
+rownames(EtOH1.data$"Gene Expression") <- gsub(pattern = "_", replacement = "",
+                                               x = rownames(EtOH1.data$"Gene Expression"))
+rownames(EtOH2.data$"Gene Expression") <- gsub(pattern = "_", replacement = "",
+                                               x = rownames(EtOH2.data$"Gene Expression"))
+rownames(EtOH3.data$"Gene Expression") <- gsub(pattern = "_", replacement = "",
+                                               x = rownames(EtOH3.data$"Gene Expression"))
+
+##### Create Seurat objects from Admera matrix with both RNA and ADT assays
+OXA1 <- CreateSeuratObject(counts = OXA1.data$"Gene Expression", project ="OXA1")
+OXA2 <- CreateSeuratObject(counts = OXA2.data$"Gene Expression", project ="OXA2")
+OXA3 <- CreateSeuratObject(counts = OXA3.data$"Gene Expression", project ="OXA3")
+EtOH1 <- CreateSeuratObject(counts = EtOH1.data$"Gene Expression", project ="EtOH1")
+EtOH2 <- CreateSeuratObject(counts = EtOH2.data$"Gene Expression", project ="EtOH2")
+EtOH3 <- CreateSeuratObject(counts = EtOH3.data$"Gene Expression", project ="EtOH3")
+
+OXA1[["ADT"]] <- CreateAssayObject(counts = OXA1.data$"Antibody Capture")
+OXA2[["ADT"]] <- CreateAssayObject(counts = OXA2.data$"Antibody Capture")
+OXA3[["ADT"]] <- CreateAssayObject(counts = OXA3.data$"Antibody Capture")
+EtOH1[["ADT"]] <- CreateAssayObject(counts = EtOH1.data$"Antibody Capture")
+EtOH2[["ADT"]] <- CreateAssayObject(counts = EtOH2.data$"Antibody Capture")
+EtOH3[["ADT"]] <- CreateAssayObject(counts = EtOH3.data$"Antibody Capture")
+
+VEH2 <- CreateSeuratObject(counts = VEH2_data, project = "VEH2", min.cells = 3, min.features = 200)
+VEH3 <- CreateSeuratObject(counts = VEH3_data, project = "VEH3", min.cells = 3, min.features = 200)
+VEH4 <- CreateSeuratObject(counts = VEH4_data, project = "VEH4", min.cells = 3, min.features = 200)
+IMQ1 <- CreateSeuratObject(counts = IMQ1_data, project = "IMQ1", min.cells = 3, min.features = 200)
+IMQ3 <- CreateSeuratObject(counts = IMQ3_data, project = "IMQ3", min.cells = 3, min.features = 200)
+IMQ6 <- CreateSeuratObject(counts = IMQ6_data, project = "IMQ6", min.cells = 3, min.features = 200)
+
+# QC FILTERING AND DATA EXAMINATION
+OXA1[["percent.mt"]] <- PercentageFeatureSet(OXA1, pattern = "^mt-")
+OXA2[["percent.mt"]] <- PercentageFeatureSet(OXA2, pattern = "^mt-")
+OXA3[["percent.mt"]] <- PercentageFeatureSet(OXA3, pattern = "^mt-")
+EtOH1[["percent.mt"]] <- PercentageFeatureSet(EtOH1, pattern = "^mt-")
+EtOH2[["percent.mt"]] <- PercentageFeatureSet(EtOH2, pattern = "^mt-")
+EtOH3[["percent.mt"]] <- PercentageFeatureSet(EtOH3, pattern = "^mt-")
+VEH2[["percent.mt"]] <- PercentageFeatureSet(VEH2, pattern = "^mt-")
+VEH3[["percent.mt"]] <- PercentageFeatureSet(VEH3, pattern = "^mt-")
+VEH4[["percent.mt"]] <- PercentageFeatureSet(VEH4, pattern = "^mt-")
+IMQ1[["percent.mt"]] <- PercentageFeatureSet(IMQ1, pattern = "^mt-")
+IMQ3[["percent.mt"]] <- PercentageFeatureSet(IMQ3, pattern = "^mt-")
+IMQ6[["percent.mt"]] <- PercentageFeatureSet(IMQ6, pattern = "^mt-")
+
+
+VlnPlot(OXA1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(OXA2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(OXA3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(EtOH1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(EtOH2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(EtOH3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(VEH2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(VEH3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(VEH4, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(IMQ1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(IMQ3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(IMQ6, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+####subset the data
+OXA1 <- subset(OXA1, subset = nFeature_RNA > 300 & nFeature_RNA < 4000 & percent.mt < 25)
+OXA2 <- subset(OXA2, subset = nFeature_RNA > 300 & nFeature_RNA < 3000 & percent.mt < 25)
+OXA3 <- subset(OXA3, subset = nFeature_RNA > 300 & nFeature_RNA < 3000 & percent.mt < 25)
+EtOH1 <- subset(EtOH1, subset = nFeature_RNA > 300 & nFeature_RNA < 4000 & percent.mt < 25)
+EtOH2 <- subset(EtOH2, subset = nFeature_RNA > 300 & nFeature_RNA < 4000 & percent.mt < 25)
+EtOH3 <- subset(EtOH3, subset = nFeature_RNA > 300 & nFeature_RNA < 4000 & percent.mt < 25)
+VEH2 <- subset(VEH2, subset = nFeature_RNA > 300 & nFeature_RNA < 5000 & percent.mt < 10)	
+VEH3 <- subset(VEH3, subset = nFeature_RNA > 500 & nFeature_RNA < 5000 & percent.mt < 20)
+VEH4 <- subset(VEH4, subset = nFeature_RNA > 300 & nFeature_RNA < 5000 & percent.mt < 20)
+IMQ1 <- subset(IMQ1, subset = nFeature_RNA > 300 & nFeature_RNA < 5000 & percent.mt < 20)
+IMQ3 <- subset(IMQ3, subset = nFeature_RNA > 300 & nFeature_RNA < 5000 & percent.mt < 20)
+IMQ6 <- subset(IMQ6, subset = nFeature_RNA > 300 & nFeature_RNA < 5000 & percent.mt < 20)
+
+###set up the condition
+OXA1$STIM <- "OXA"
+OXA2$STIM <- "OXA"
+OXA3$STIM <- "OXA"
+EtOH1$STIM <- "EtOH"
+EtOH2$STIM <- "EtOH"
+EtOH3$STIM <- "EtOH"
+VEH2$STIM <- "VEH"
+VEH3$STIM <- "VEH"
+VEH4$STIM <- "VEH"
+IMQ1$STIM <- "IMQ"
+IMQ3$STIM <- "IMQ"
+IMQ6$STIM <- "IMQ"
+
+###merge replicates
+OXA.merge <- merge(x = OXA1, y = c(OXA2, OXA3), add.cell.ids = c("OXA1", "OXA2", "OXA3"), project = "OXA")
+EtOH.merge <- merge(x = EtOH1, y = c(EtOH2, EtOH3), add.cell.ids = c("EtOH1", "EtOH2", "EtOH3"), project = "EtOH")
+VEH.big <- merge(VEH2, y = c(VEH3, VEH4), add.cell.ids = c("VEH2", "VEH3", "VEH4"), project = "VEH")
+IMQ.big <- merge(IMQ1, y = c(IMQ3, IMQ6), add.cell.ids = c("IMQ1", "IMQ3", "IMQ6"), project = "IMQ")
+
+#Combie object into a list, with each dataset as an element
+skin.list <- list(OXA.merge, EtOH.merge, VEH.big, IMQ.big)
+
+#Normalize and FindVariableFeatures in all datasets
+for (i in 1:length(skin.list)) {
+  skin.list[[i]] <- NormalizeData(skin.list[[i]], verbose = TRUE)
+  skin.list[[i]] <- FindVariableFeatures(skin.list[[i]], selection.method = "vst", 
+                                         nfeatures = 2000, verbose = TRUE)
+}
+
+#Integration steps
+skin.anchors <- FindIntegrationAnchors(skin.list, anchor.features = 2000, 
+                                       dims = 1:30)
+skin.integrated <- IntegrateData(anchorset =  skin.anchors, dims = 1:30)
+skin.integrated <- ScaleData(skin.integrated, verbose = TRUE)
+skin.integrated <- RunPCA(skin.integrated, npcs = 30, verbose = TRUE)
+ElbowPlot(skin.integrated, ndims=50)
+skin.integrated <- RunUMAP(skin.integrated, reduction = "pca", dims = 1:20)
+skin.integrated <- RunTSNE(skin.integrated, reduction = "pca", check_duplicates = FALSE, dims = 1:20)
+skin.integrated <- FindNeighbors(skin.integrated, reduction = "pca", dims = 1:20)
+skin.integrated <- FindClusters(skin.integrated, resolution = 0.5)
+
+#save RDS for downstream analysis
+saveRDS(skin.integrated, "~/skin_integrated.rds")
