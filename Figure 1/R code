@@ -1,35 +1,39 @@
+library(Seurat)
+library(ggplot2)
+
+#####load data
+skin.integrated <- readRDS("~/skin_integrated.rds")
+
 ##########################################   Figure 1A   #########################################
+###get immune data
+Immune <- subset(skin.integrated, idents =c("0", "1", "2", "3", "4", "5", "6, "9", "10", "14", "15", "16", "17"))
 
+###rename the cluster
+Immune<- RenameIdents(Immune, `0` = "Mac", `1` = "DETC", `2` = "M/MdM", `3` = "dγδT", `4` = "cDC2", `5` = "ILC2", `6` = "Thet", `9` = "M/B", 
+                      `10` = "Neu", `14` = "cDC1", `15` = "LC", `16` = "mDC", `17` = "NK")
 
-
-
-
-
+###visulize the plot
+DimPlot(Immune, reduction = "tsne", label = T, label.size = 5, pt.size = .8 )+NoLegend()
 
 
 
 ##########################################   Figure 1B   #########################################
+#### get the data matrix
+Tabulate cells by cluster ID, replicate, or both#
+Idents(Immune) <- "seurat_clusters"
+table(Idents(Immune))
+table(Immune$orig.ident)
+prop.table(table(Idents(Immune)))
+table(Idents(Immune), Immune$orig.ident)
+prop.table(table(Idents(Immune), Immune$orig.ident), margin = 2)
 
 
-
-
-
-
-
-
-
+#### outut the data matrix and make the plot by excel
 
 
 
 ##########################################   Figure 1C   ########################################
 
-Idents(Immune) <- Immune@meta.data$seurat_clusters
-Idents(Immune)
-Immune<- RenameIdents(Immune, `0` = "Mac", `1` = "DETC", `2` = "M/MdM", `3` = "dγδT", `4` = "cDC2", `5` = "ILC2", `6` = "Thet", `9` = "M/B", 
-                      `10` = "Neu", `14` = "cDC1", `15` = "LC", `16` = "mDC", `17` = "NK")
-
-DimPlot(Immune, reduction = "tsne", label = T, label.size = 5)+NoLegend()+
-  
 levels(Immune) <- c("Mac", "M/MdM", "cDC1", "cDC2", "mDC", "LC", "DETC", "dγδT", "Thet", "ILC2","NK", "M/B", "Neu")
 
 
@@ -45,5 +49,6 @@ DotPlot(Immune, features = rev(markers.to.plot), cols=c("navajowhite1", "steelbl
 
 
 ##########################################   Figure 1D   ########################################
+
 VlnPlot(Immune, features = "Ccr6", assay="RNA", slot = "data")+
   theme(axis.text.x = element_text(size = 10, angle = 0))+NoLegend()
