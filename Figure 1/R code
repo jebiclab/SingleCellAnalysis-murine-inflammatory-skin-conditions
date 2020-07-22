@@ -50,5 +50,5 @@ DotPlot(Immune, features = rev(markers.to.plot), cols=c("navajowhite1", "steelbl
 
 ##########################################   Figure 1D   ########################################
 
-VlnPlot(Immune, features = "Ccr6", assay="RNA", slot = "data")+
+VlnPlot(Immune, features = "Cd4", assay="RNA", slot = "data")+
   theme(axis.text.x = element_text(size = 10, angle = 0))+NoLegend()
