@@ -1,6 +1,10 @@
 library(Seurat)
 library(xlsx)
 
+#######load data
+skin.integrated <- readRDS ("~/skin_integrated.rds")
+
+
 ### Find Cluster markers---conserved markers
 DefaultAssay(skin.integrated ) <-"RNA"
 for (i in 0:20){
