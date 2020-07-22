@@ -1,0 +1,98 @@
+library(Seurat)
+library(Slingshot)
+library(SingCellExperiment)
+library(destiny, quietly = TRUE)
+library(clusterExperiment)
+
+###subset M/B cluster
+Idents(Immune) <- Immune$seurat_clsuters
+
+####transfer seurat onject to single cell experiment
+Granu <- subset(Immune, idents = "10")
+Granu.sce <- as.SingleCellExperiment(Granu, assay = NULL)
+assays(Granu.sce) <- lapply(assays(Granu.sce), round)
+
+xyz <- as.matrix(Granu$RNA@"counts")
+
+counts <- apply(xyz,2,function(cell_xyz){
+  total <- rnbinom(1, mu = 7500, size = 4)
+  rmultinom(1, total, cell_xyz)
+})
+rownames(counts) <- paste0(1: 31053)
+colnames(counts) <- paste0(1:500)
+sim <- SingleCellExperiment(assays = List(counts = counts))
+
+#################################Upstream analysis#########################################################
+##gene filtering
+geneFilter <- apply(assays(sim)$counts,1,function(x){
+  sum(x >= 3) >= 10
+})
+sim <- sim[geneFilter, ]
+##Normalization
+FQnorm <- function(counts){
+  rk <- apply(counts,2,rank,ties.method='min')
+  counts.sort <- apply(counts,2,sort)
+  refdist <- apply(counts.sort,1,median)
+  norm <- apply(rk,2,function(r){ refdist[r] })
+  rownames(norm) <- rownames(counts)
+  return(norm)
+}
+assays(sim)$norm <- FQnorm(assays(sim)$counts)
+##Dimensionality Reduction
+pca <- prcomp(t(log1p(assays(sim)$norm)), scale. = FALSE)
+rd1 <- pca$x[,1:2]
+plot(rd1, col = rgb(0,0,0,.5), pch=16, asp = 1)
+
+dm <- DiffusionMap(t(log1p(assays(sim)$norm)))
+rd2 <- cbind(DC1 = dm$DC1, DC2 = dm$DC2)
+plot(rd2, col = rgb(0,0,0,.5), pch=16, asp = 1)
+
+reducedDims(sim) <- SimpleList(PCA = rd1, DiffMap = rd2)
+##Clustering cell
+library(mclust, quietly = TRUE)
+cl1 <- Mclust(rd1)$classification
+colData(sim)$GMM <- cl1
+library(RColorBrewer)
+plot(rd1, col = brewer.pal(9,"Set1")[cl1], pch=16, asp = 1)
+
+cl2 <- kmeans(rd1, centers = 3)$cluster
+colData(sim)$kmeans <- cl2
+plot(rd1, col = brewer.pal(9,"Set1")[cl2], pch=16, asp = 1)
+#######################################using slingshot---Figure 4C###################################################
+sim <- slingshot(sim, clusterLabels = 'GMM', reducedDim = 'PCA')
+summary(sim$slingPseudotime_1)
+colors <- colorRampPalette(brewer.pal(11,'Spectral')[-6])(100)
+plotcol <- colors[cut(sim$slingPseudotime_1, breaks=100)]
+
+plot(reducedDims(sim)$PCA, col = plotcol, pch=16, asp = 1)
+lines(SlingshotDataSet(sim), lwd=2, col='black')
+
+plot(reducedDims(sim)$PCA, col = brewer.pal(9,'Set1')[sim$GMM], pch=16, asp = 1)
+lines(SlingshotDataSet(sim), lwd=2, type = 'lineages', col = 'black')
+
+####################################Downstream Analysis ---Figure 4A##################################################
+t <- sim$slingPseudotime_1
+
+# for time, only look at the 100 most variable genes
+Y <- log1p(assays(sim)$norm)
+var1K <- names(sort(apply(Y,1,var),decreasing = TRUE))[1:100]
+Y <- Y[var1K,]
+
+# fit a GAM with a loess term for pseudotime
+library(gam)
+gam.pval <- apply(Y,1,function(z){
+  d <- data.frame(z=z, t=t)
+  tmp <- gam(z ~ lo(t), data=d)
+  p <- summary(tmp)[4][[1]][1,5]
+  p
+})
+
+topgenes <- names(sort(gam.pval, decreasing = FALSE))[1:100]
+heatdata <- assays(sim)$norm[rownames(assays(sim)$norm) %in% topgenes, 
+                             order(t, na.last = NA)]
+heatclus <- sim$kmeans[order(t, na.last = NA)]
+
+
+ce <- ClusterExperiment(heatdata, heatclus, transformation = log1p)
+head(ce)
+plotHeatmap(ce, clusterSamplesData = "orderSamplesValue", visualizeData = 'centeredAndScaled')
