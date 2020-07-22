@@ -1,0 +1,75 @@
+##############Figure 3A gaint heatmap
+library(scales)
+library(pheatmap)
+librart(xlsx
+
+###make the data matrix
+a. choose the significant DGE from OXA vs OXA-C and IMQ- vs IMQ-C with the cutoff of avg_logFC >0.05 & p_adj_val < 0.05
+b. use the new gene lists to run DEGs
+c. get the avg_logFC from the DEG sheets and make new data matrix
+
+###run pheatmap with above data matrix
+
+save_pheatmap_png <- function(x, filename, width=1200, height=20000, res = 150) {
+  png(filename, width = width, height = height, res = res)
+  grid::grid.newpage()
+  grid::grid.draw(x$gtable)
+  dev.off()
+}
+
+###ALL genes
+save_pheatmap_pdf <- function(x, filename, width=7, height=100) {
+  pdf(filename, width = width, height = height)
+  grid::grid.newpage()
+  grid::grid.draw(x$gtable)
+  dev.off()
+}
+
+save_pheatmap_svg <- function(x, filename, width=2000, height=8000) {
+  svg(filename, width = width, height = height)
+  grid::grid.newpage()
+  grid::grid.draw(x$gtable)
+  dev.off()
+}
+
+
+
+heatmap.data <- read.xlsx("~/DataMatrix.xlsx", sheet=1, rowNames = T)
+
+heatmap.data[1:6,1:6]
+
+col.anno <- colnames(heatmap.data)
+
+my_anno_col <- data.frame(stim=factor(sapply(col.anno, substr, 1, 1), labels=c("IMQ", "OXA")),
+                          cluster=factor(sapply(col.anno, substr, 3, 13)))
+my_colors=list(stim=hue_pal(l=50)(length(levels(my_anno_col$stim))),
+               cluster=hue_pal(l=80, c=100)(length(levels(my_anno_col$cluster))))
+names(my_colors$cluster) <- levels(my_anno_col$cluster)
+names(my_colors$stim) <- levels(my_anno_col$stim)
+
+
+max(heatmap.data, na.rm=TRUE)
+min(heatmap.data, na.rm=TRUE)
+
+
+### for New Giant
+breaksList = as.numeric(seq(-3, 4, by = .01))
+
+
+myhm <- pheatmap(heatmap.data,
+                 color = colorRampPalette(rev(brewer.pal(n = 8, name = "Accent")))(length(breaksList)),
+                 breaks = breaksList,
+                 show_rownames = F,
+                 cluster_cols = F,
+                 cluster_rows = T,
+                 annotation_colors=my_colors,
+                 annotation_col=my_anno_col,
+                 clustering_distance_rows = "euclidean", ### there are "euclidean" and "correlation", choose the one with outout makes more sense
+                 border_color = NA,
+                 #scale="row",
+)
+
+
+save_pheatmap_png(myhm, "E:/Paper draft/DEG-13-logfc-cutoff/Sig-05.png")
+save_pheatmap_pdf(myhm, "E:/Paper draft/DEG-13-logfc-cutoff/Sig-correlation.pdf")
+save_pheatmap_svg(myhm, "E:/Paper draft/DEG-13-logfc-cutoff/FCHeatmapFinal.svg")
