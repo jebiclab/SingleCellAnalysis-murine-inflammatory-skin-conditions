@@ -1,0 +1,40 @@
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+#####load the data
+Immune <- readRDS("~/Immune.rds")
+
+DimPlot(Immune, reduction = "tsne", label = T)
+
+#####Rename the clusters
+Immune1 <- RenameIdents(Immune, `1` = "Mac", `2` = "DETC", `3` = "M/MdM", `4` = "dγδT", `5` = "cDC2", `6` = "ILC2", `7` = "Thet",
+                                `8` = "M/B", `9` = "Neu", `10` = "cDC1", `11` = "LC", `12` = "mDC",  `13` = "NK")
+
+DimPlot(Immune1, reduction = "tsne", label = T)
+
+#####change cluster orders
+levels(Immune1) <- c("Mac", "M/MdM", "cDC1", "cDC2", "mDC", "LC", "DETC", "dγδT", "Thet", "ILC2","NK", "M/B", "Neu")
+
+#####get data 
+cell.prop<-as.data.frame(prop.table(table(Idents(Immune1), Immune1$stim)))
+
+colnames(cell.prop)<-c( "ident", "stim", "proportion")
+
+cell.prop %>% 
+  dplyr::mutate(stim = factor(stim, levels = c("ETOH", "OXA", "VEH", "IMQ"))) %>% 
+  
+  ggplot(aes(stim, proportion, fill=ident))+
+  
+  geom_bar(stat="identity",position="fill", col="black")+
+  
+  ggtitle("")+
+  
+  theme_bw()+
+  
+  theme(axis.ticks.length=unit(0.5,'cm'))+
+  
+  guides(fill=guide_legend(title=NULL))+
+
+  scale_fill_manual(values = c("Steelblue", "firebrick", "olivedrab", "violetred", "lightgoldenrod", "maroon",
+                               "dodgerblue", "red1", "slateblue", "chocolate3", "seagreen", "rosybrown2",
+                               "navyblue"))
