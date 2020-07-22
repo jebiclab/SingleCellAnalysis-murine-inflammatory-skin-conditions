@@ -27,7 +27,7 @@ MB$genelabels <- ifelse(MB$NA.=="Mcpt4"
                           |MB$NA.=="Mcpt8", TRUE,FALSE)
                           
 cols <- c("Nonsig" = "darkgrey", "black" ="black", "Down" = "blue",  "Up" = "red")
-ggplot(c8deg)+
+ggplot(MB)+
   geom_point(aes(avg_logFC, -log10(p_val_adj), col=thershold))+
   geom_text_repel(aes(avg_logFC, -log10(p_val_adj)), label= ifelse(MB$genelabels, as.character(MB$NA.), ""))+
                         theme(legend.title = element_blank(), text=element_text(size=20))+
