@@ -1,0 +1,35 @@
+library(ggplot2)
+library(ggrepel)
+
+
+MB <- read.xlsx("~/MB.xlsx", sheetIndex = 1)
+
+MB$thershold <- ifelse(MB$avg_logFC > 1.5 & MB$p_val < 0.1, "Up", 
+                            ifelse(MB$avg_logFC < -1.5 & MB$p_val < 0.1, "Down", "Nonsig"))
+MB$genelabels <- ""
+MB$genelabels <- ifelse(MB$NA.=="Mcpt4"
+                          |MB$NA.=="Ccl7"
+                          |MB$NA.=="Cpa3"
+                          |MB$NA.=="Ccl2"
+                          |MB$NA.=="Mcpt8"
+                          |MB$NA.=="Ccl3"
+                          |MB$NA.=="Ccl4"
+                          |MB$NA.=="Ccl6"
+                          |MB$NA.=="Ccl9"
+                          |MB$NA.=="Il1b"
+                          |MB$NA.=="Ifitm1"
+                          |MB$NA.=="Cxcl2"
+                          |MB$NA.=="Il4"
+                          |MB$NA.=="Il13"
+                          |MB$NA.=="Il6"
+                          |MB$NA.=="Cxcr4"
+                          |MB$NA.=="Lilr4b"
+                          |MB$NA.=="Mcpt8", TRUE,FALSE)
+                          
+cols <- c("Nonsig" = "darkgrey", "black" ="black", "Down" = "blue",  "Up" = "red")
+ggplot(c8deg)+
+  geom_point(aes(avg_logFC, -log10(p_val_adj), col=thershold))+
+  geom_text_repel(aes(avg_logFC, -log10(p_val_adj)), label= ifelse(MB$genelabels, as.character(MB$NA.), ""))+
+                        theme(legend.title = element_blank(), text=element_text(size=20))+
+                        scale_color_manual(values = cols)+
+  theme_bw()
