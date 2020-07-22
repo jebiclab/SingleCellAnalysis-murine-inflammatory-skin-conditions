@@ -1,0 +1,42 @@
+library(xlsx)
+library(ggplot2)
+
+##3
+The code is almost the same as this clsuter 0, just change the sheet names or sheet index if all the data are together
+
+######################### Cluster 0
+Cluster0 <- read.xlsx("E:/scatterplot/scatterplot-sig/Cluster0.xlsx", sheetindex = 1)
+Cluster0$threshold <- ifelse(Cluster0$p_val_adj_1 < 0.05 & Cluster0$p_val_adj_2 < 0.05, "DE both", 
+                             ifelse(Cluster0$p_val_adj_1 < 0.05 & Cluster0$p_val_adj_2 > 0.05, "DE IMQ",
+                                    ifelse(Cluster0$p_val_adj_1 > 0.05 & Cluster0$p_val_adj_2 < 0.05, "DE OXA", "NS")))
+Cluster0$genelabels <- ""
+
+Cluster0$genelabels <- ifelse(abs(Cluster0$OXA) > "2"
+                              |abs(Cluster0$IMQ) > "1.5"
+                              |Cluster0$X1=="Mgl2"
+                              |Cluster0$X1=="Ccl2"
+                              |Cluster0$X1=="Ccl8"
+                              |Cluster0$X1=="Ccr2"
+                              |Cluster0$X1=="Ccr5"
+                              |Cluster0$X1=="Tgfbi"
+                              |Cluster0$X1=="Jak2"
+                              |Cluster0$X1=="Il17a"
+                              |Cluster0$X1=="Cd52"
+                              |Cluster0$X1=="Nrip3"
+                              |Cluster0$X1=="Ler3"
+                              |Cluster0$X1=="Rgcc"
+                              |Cluster0$X1=="Mrc1"
+                              |Cluster0$X1=="Mafb", TRUE, FALSE)
+
+cols <- c("DE both" = "purple", "DE IMQ" ="blue", "DE OXA" = "red",  "NS" = "grey")
+
+
+ggplot(Cluster0, aes(IMQ, OXA, color=threshold))+
+  geom_text_repel(aes(IMQ, OXA, label= ifelse(Cluster0$genelabels, as.character(Cluster0$X1), "")), color = "black", size = 5, vjust = 2, box.padding = unit(0.2, "lines"))+
+  geom_point(size=3)+
+  scale_color_manual(values = cols)+
+  theme_bw() +
+  theme() +  
+  geom_vline(xintercept = 0)+ 
+  geom_hline(yintercept = 0)+
+  ggtitle("Mac")
