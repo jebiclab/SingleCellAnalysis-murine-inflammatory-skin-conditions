@@ -43,8 +43,9 @@ markers.to.plot <- c("Adgre1", "Itgam", "Cd68", "Lyz2", "Ms4a7", "C1qc", "Plac8"
                      "Gzma", "Gzmb", "Klra7", "Klra8", "Ncr1", "Gata2", "Ms4a2", "Cpa3",	"Mcpt4", "Mcpt8",
                      "Cd14", "Csf3r", "S100a9", "S100a8", "Sell")
 
-DotPlot(Immune, features = rev(markers.to.plot), cols=c("navajowhite1", "steelblue3"), scale.by = "radius", dot.scale=8)+
-  theme(axis.text.x = element_text(size = 10, angle = 90))
+DotPlot(Immune, features = rev(markers.to.plot), cols=c("lightgrey", "blue"), col.min = 0, col.max = 0.2, dot.min=0)+
+theme(axis.text.x = element_text(size = 8, angle =90))+ scale_size(range = c(0, 8))+
+theme(legend.title = element_text(color = "black", size = 12))
 
 
 
