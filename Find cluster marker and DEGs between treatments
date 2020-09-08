@@ -16,14 +16,14 @@ for (i in 0:20){
 
 ### Find Cluster markers---find all markers
 DefaultAssay(skin.integrated ) <-"RNA"
-marker_i <- FindAllMarkers(skin.integrated, ident.1 = i, grouping.var = "cond", verbose = TRUE, test.use = "MAST")
+marker_i <- FindAllMarkers(skin.integrated, ident.1 = i, grouping.var = "cond", verbose = TRUE, assay = "RNA", slot = "data", test.use = "MAST")
 write.xlsx(marker_i, file = "G:/IMQ-OXA/FindConservedMarker.xlsx", sheetName = tab, append = TRUE)
 
 
 
 ### Find DEGs betweem IMQ and IMQ-C
 for (i in 0:20){
-  marker_i <- FindMarkers(skin.integrated, ident.1 ="IMQ", ident.2 ="VEH", group.by = "cond", verbose = TRUE, subset.ident = i, test.use = "MAST")
+  marker_i <- FindMarkers(skin.integrated, ident.1 ="IMQ", ident.2 ="VEH", group.by = "cond", verbose = TRUE, subset.ident = i, assay = "RNA", slot = "data", test.use = "MAST")
   tab  <- paste0("Cluster", " ", i)
   write.xlsx(marker_i, file = "~/IMQ-IMQC-DEG.xlsx", sheetName = tab, append = TRUE)
 }
@@ -32,7 +32,7 @@ for (i in 0:20){
 
 ### Find DEGs betweem OXA and OXA-C
 for (i in 0:20){
-  marker_i <- FindMarkers(skin.integrated, ident.1 ="OXA", ident.2 ="EtOH", group.by = "cond", verbose = TRUE, subset.ident = i, test.use = "MAST")
+  marker_i <- FindMarkers(skin.integrated, ident.1 ="OXA", ident.2 ="EtOH", group.by = "cond", verbose = TRUE, subset.ident = i, assay = "RNA", slot = "data", test.use = "MAST")
   tab  <- paste0("Cluster", " ", i)
   write.xlsx(marker_i, file = "~/OXA-OXAC-DEG.xlsx", sheetName = tab, append = TRUE)
 }
