@@ -2,7 +2,7 @@
 
 Code to analyze RNA sequencing data and generate figures in Yale, Chris, AJ et al (Single-Cell Profiling Reveals Divergent, Globally Patterned Immune Responses in Murine Skin Inflammation).
 
-Raw and normalized expression matrices are deposited at the GEO under accession number GSE149121, while the processed data with cell identites is saved at Zenodo with 
+Raw and normalized expression matrices are deposited at the GEO under accession number GSE149121, while the processed data with cell identites is saved at Zenodo with https://doi.org/10.1016/j.isci.2020.101582
 
 doi:https://doi.org/10.1016/j.isci.2020.101582
 
